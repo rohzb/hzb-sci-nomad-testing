@@ -44,14 +44,14 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Create a non-privileged user that the frenrug will run under.
 # See https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user
-ARG UID=1000
+ARG UID=1500000
 RUN adduser \
     --disabled-password \
     --gecos "" \
     --home "/nonexistent" \
     --shell "/sbin/nologin" \
     --no-create-home \
-    --uid "${UID}" \
+    --uid "${GID}" \
     nomad
 
 FROM base AS builder
@@ -78,7 +78,7 @@ RUN apt-get update \
 
 # Create a non-privileged user that the frenrug will run under.
 # See https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user
-ARG UID=1000
+ARG UID=1500000
 RUN adduser \
     --disabled-password \
     --gecos "" \
@@ -86,6 +86,7 @@ RUN adduser \
     --shell "/sbin/nologin" \
     --no-create-home \
     --uid "${UID}" \
+    --gid "${GID}" \
     nomad
 
 
@@ -104,14 +105,14 @@ COPY scripts ./scripts
 
 FROM base_final AS final
 
-COPY --chown=nomad:1000 --from=builder /opt/venv /opt/venv
-COPY --chown=nomad:1000 scripts/run.sh .
-COPY --chown=nomad:1000 scripts/run-worker.sh .
+COPY --chown=nomad:${GID} --from=builder /opt/venv /opt/venv
+COPY --chown=nomad:${GID} scripts/run.sh .
+COPY --chown=nomad:${GID} scripts/run-worker.sh .
 COPY configs/nomad.yaml nomad.yaml
 
 RUN mkdir -p /app/.volumes/fs \
- && chown -R nomad:1000 /app \
- && chown -R nomad:1000 /opt/venv \
+ && chown -R nomad:${GID} /app \
+ && chown -R nomad:${GID} /opt/venv \
  && mkdir nomad \
  && cp /opt/venv/lib/python3.12/site-packages/nomad/jupyterhub_config.py nomad/
 
@@ -155,3 +156,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Get rid ot the following message when you open a terminal in jupyterlab:
 # groups: cannot find name for group ID 11320
 RUN touch ${HOME}/.hushlogin
+
+# RO: Fixes to owner permissions
+RUN chown -R ${GID}:${GID} /usr/local/lib/node_modules/
+RUN chown -R ${GID}:${GID} /usr/bin/bsondump
+
