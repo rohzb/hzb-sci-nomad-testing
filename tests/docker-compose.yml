@@ -93,7 +93,7 @@ services:
 
   app:
     restart: unless-stopped
-    image: ${APP_IMAGE:-ghcr.io/fairmat-nfdi/nomad-distro-template:main}
+    image: ${APP_IMAGE:-ghcr.io/rohzb/hzb-sci-nomad-testing:main}
     platform: linux/amd64
     container_name: app
     command:
@@ -142,7 +142,7 @@ services:
 
   jupyter:
     restart: unless-stopped
-    image: ${JUPYTER_IMAGE:-ghcr.io/fairmat-nfdi/nomad-distro-template/jupyter:main}
+    image: ${JUPYTER_IMAGE:-ghcr.io/rohzb/hzb-sci-nomad-testing/jupyter:main}
     platform: linux/amd64
     container_name: jupyter
     ports:
