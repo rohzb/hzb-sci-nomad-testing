@@ -6,6 +6,8 @@
 
 ARG PYTHON_VERSION=3.12
 ARG UV_VERSION=0.6
+ARG UID=1500000
+ARG GID=1500000
 
 FROM ghcr.io/astral-sh/uv:${UV_VERSION} AS uv_image
 
@@ -21,6 +23,9 @@ ENV VIRTUAL_ENV=/opt/venv \
 
 # Final stage to create the runnable image with minimal size
 FROM base AS base_final
+
+ARG UID
+ARG GID
 
 WORKDIR /app
 
@@ -44,14 +49,15 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Create a non-privileged user that the frenrug will run under.
 # See https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user
-ARG UID=1500000
-RUN adduser \
+RUN addgroup --gid "${GID}" nomad \
+ && adduser \
     --disabled-password \
     --gecos "" \
     --home "/nonexistent" \
     --shell "/sbin/nologin" \
     --no-create-home \
-    --uid "${GID}" \
+    --uid "${UID}" \
+    --gid "${GID}" \
     nomad
 
 FROM base AS builder
@@ -60,6 +66,9 @@ FROM base AS builder
 ENV PYTHONDONTWRITEBYTECODE=1
 
 ENV RUNTIME=docker
+
+ARG UID
+ARG GID
 
 WORKDIR /app
 
@@ -78,8 +87,8 @@ RUN apt-get update \
 
 # Create a non-privileged user that the frenrug will run under.
 # See https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user
-ARG UID=1500000
-RUN adduser \
+RUN addgroup --gid "${GID}" nomad \
+ && adduser \
     --disabled-password \
     --gecos "" \
     --home "/nonexistent" \
@@ -88,7 +97,6 @@ RUN adduser \
     --uid "${UID}" \
     --gid "${GID}" \
     nomad
-
 
 # Install UV
 COPY --from=uv_image /uv /bin/uv
@@ -100,10 +108,11 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --extra plugins --frozen
 
-
 COPY scripts ./scripts
 
 FROM base_final AS final
+
+ARG GID
 
 COPY --chown=nomad:${GID} --from=builder /opt/venv /opt/venv
 COPY --chown=nomad:${GID} scripts/run.sh .
@@ -123,7 +132,6 @@ EXPOSE 8000
 EXPOSE 9000
 
 VOLUME /app/.volumes/fs
-
 
 FROM quay.io/jupyter/datascience-notebook:2025-04-04 AS jupyter
 
@@ -152,12 +160,11 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv export --frozen --extra plugins --extra jupyter | uv pip install -r /dev/stdin --system
 
-
 # Get rid ot the following message when you open a terminal in jupyterlab:
 # groups: cannot find name for group ID 11320
 RUN touch ${HOME}/.hushlogin
 
 # RO: Fixes to owner permissions
+ARG GID
 RUN chown -R ${GID}:${GID} /usr/local/lib/node_modules/
 RUN chown -R ${GID}:${GID} /usr/bin/bsondump
-
