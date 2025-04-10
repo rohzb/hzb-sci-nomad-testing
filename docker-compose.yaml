@@ -21,7 +21,7 @@ services:
   # the search engine
   elastic:
     restart: unless-stopped
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.28
+    image: ghcr.io/rohzb/hzb-sci-nomad-testing/elastic:main # docker.elastic.co/elasticsearch/elasticsearch:7.17.28
     container_name: nomad_oasis_elastic
     environment:
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
@@ -43,7 +43,7 @@ services:
   # the user data db
   mongo:
     restart: unless-stopped
-    image: mongo:5.0.6
+    image: ghcr.io/rohzb/hzb-sci-nomad-testing/mongo:main # mongo:5.0.6
     container_name: nomad_oasis_mongo
     environment:
       - MONGO_DATA_DIR=/data/db
@@ -149,8 +149,8 @@ services:
     volumes:
       # - ./configs/nomad.yaml:/app/nomad.yaml
       - ./.volumes/fs:/app/.volumes/fs
-      - /var/run/docker.sock:/var/run/docker.sock
-    user: "1000:991"
+      # - /var/run/docker.sock:/var/run/docker.sock
+    user: "1500000:1500000"
     command: python -m nomad.cli admin run hub
     healthcheck:
       test:

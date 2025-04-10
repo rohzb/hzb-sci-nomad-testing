@@ -165,6 +165,13 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 RUN touch ${HOME}/.hushlogin
 
 # RO: Fixes to owner permissions
+
+FROM mongo:5.0.6 as mongo
+ARG UID
 ARG GID
-RUN chown -R ${GID}:${GID} /usr/local/lib/node_modules/
-RUN chown -R ${GID}:${GID} /usr/bin/bsondump
+RUN chown -R ${UID}:${GID} /usr/bin/bsondump
+
+FROM docker.elastic.co/elasticsearch/elasticsearch:7.17.28 as elastic
+ARG UID
+ARG GID
+RUN chown -R ${UID}:${GID} /usr/local/lib/node_modules
