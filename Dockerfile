@@ -168,4 +168,4 @@ RUN touch ${HOME}/.hushlogin
 
 FROM docker.io/library/mongo:5.0.6 as mongo
 
-FROM docker.elastic.co/elasticsearch/elasticsearch:7.17.28 as elastic
+FROM docker.elastic.co/elasticsearch/elasticsearch:8.17.4 as elastic
