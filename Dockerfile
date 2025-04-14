@@ -166,6 +166,6 @@ RUN touch ${HOME}/.hushlogin
 
 # RO: Fixes to owner permissions
 
-FROM docker.io/library/mongo:5.0.6 as mongo
+FROM docker.io/library/mongo:8.0.6 as mongo
 
 FROM docker.elastic.co/elasticsearch/elasticsearch:7.17.28 as elastic
